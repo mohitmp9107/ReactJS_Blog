@@ -7,11 +7,12 @@ import NewPost from "./NewPost";
 import EditPost from "./EditPost";
 import PostPage from "./PostPage";
 import Missing from "./Missing";
-import { Route, Routes,useNavigate, useParams } from "react-router-dom";
+import { Route, Routes,useNavigate} from "react-router-dom";
 import { useState,useEffect } from "react";
 import format from "date-fns/format";
 import api from './api/posts';
 import useWindowSize from "./hooks/useWindowSize";
+import useAxiosFetch from "./hooks/useAxiosFetch";
 
 function App() {
   const [posts,setPosts] = useState([]);
@@ -23,24 +24,11 @@ function App() {
   const [editBody,setEditBody] = useState('');
   const navigate = useNavigate();
   const {width} = useWindowSize();
+  const {data,fetchError,isLoading} = useAxiosFetch('http://localhost:3500/posts');
 
   useEffect( ()=>{
-    const fetch = async()=>{
-      try{
-        const response = await api.get('/posts'); 
-        setPosts(response.data);
-      }catch(err){
-        if(err.response){
-          console.log(err.response.data);
-          console.log(err.response.status);
-          console.log(err.response.header);
-        }else{
-          console.log(`Error: ${err.message}`);
-        }
-      }
-    };
-    fetch();
-  },[]);
+    setPosts(data);
+  },[data]);
 
   useEffect(()=>{
     const filteredResults = posts.filter(post=>
@@ -93,7 +81,12 @@ function App() {
       <Header title={"React JS Blog"} width={width}/>
       <Nav search={search} setSearch={setSearch}/>
       <Routes>
-        <Route exact path="/" element={<Home posts={searchResults}/>}/>
+        <Route exact path="/" element={
+                    <Home 
+                      posts={searchResults}
+                      fetchError={fetchError}
+                      isLoading={isLoading}
+                    />}/>
         <Route exact path="/post" element={
                      <NewPost
                       handleSubmit = {handleSubmit}
